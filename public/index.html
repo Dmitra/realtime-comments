@@ -1,0 +1,71 @@
+<html>
+<head>
+<title>Realtime comments</title>
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.4.4.min.js"></script>
+<script type="text/javascript" src="/dnode.js"></script>
+<script type="text/javascript" src="/chat.js"></script>
+<script type="text/javascript" src="/model.js"></script>
+<link rel="StyleSheet" type="text/css" href="chat.css">
+</head>
+
+<body>
+    <div id="chat">
+        <div id="prompt">
+            <form id="name">
+                Name:
+                <input type="text" name="name">
+            </form>
+        </div>
+        
+        <div id="messages"></div>
+        
+        <form id="post">
+            <input type="text" name="msg">
+        </form>
+    </div>
+
+<script type="text/javascript">
+  var container = $('#messages');
+  var msgForm = $('form#post');
+  var input = msgForm.find('input');
+
+  $(window).load(function () {
+      // Fetch the user's name before the main chat code fires
+      $('form#name').submit(onsubmit);
+      $('form#name > input').focus();
+  });
+
+  function onsubmit(ev) {
+    ev.preventDefault();
+    name = $('form#name > input').val();
+    container.show();
+    $('#prompt').hide();
+    input.focus();
+    // Connect to the chat server now that we've got a name
+    chat = new Chat(new Model())
+    DNode(chat).connect(connected);
+  }
+
+  function connected(remote) {
+    remote.setUser(name);
+    msgForm.keyup(function(ev){
+      remote.say(input.val());
+    });
+
+    msgForm.submit(function(ev) {
+      ev.preventDefault(); //prevents default browser behaviour
+      remote.told();
+      input.val('');
+    });
+
+    // fetch a list of all the connected users
+    remote.getNames(function (res) {
+      $('<div/>', {
+        "class": 'users',
+        text : 'Users: ' + (res.join(', ') || '(no users)')
+      }).appendTo(container);
+    });
+  };
+  
+</script>
+</body>
